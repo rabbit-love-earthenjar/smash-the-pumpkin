@@ -14,7 +14,7 @@
       Object.freeze({ name: '挑战', speed: 258, error: 265, reactionMin: 0.10, reactionMax: 0.22, attackWindow: 0.13 })
     ]),
     attackRange: 116, attackCooldown: 0.34, pointsToWin: 3,
-    streakToWin: 3, serveDelay: 0.78, pointDelay: 1.25,
+    streakToWin: 3, serveDelay: 0.78, playerServeDelay: 2.6, serveIdleDelay: 0.85, pointDelay: 1.25,
     roundDelay: 2.1, countdownDuration: 3.2, explosionDuration: 1.2
   });
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -47,7 +47,9 @@
       this.totalHits = 0;
       this.winner = null;
       this.pointWinner = null;
+      this.lastRoundWinner = null;
       this._server = 'player';
+      this._serveIdleTime = 0;
       this._jumpHeld = false;
       this._roundFinished = false;
       this._finalWin = false;
@@ -61,11 +63,26 @@
       if (this.state === 'ready') this._prepareServe();
     }
 
+    continueNextRound() {
+      if (this.state !== 'roundEnd' || !this._roundFinished || this._finalWin) return false;
+      this._prepareServe();
+      return true;
+    }
+
     pause(value = true) { this.paused = Boolean(value); }
 
     get difficulty() { return Math.min(3, this.streak + 1); }
 
     get _aiConfig() { return CONFIG.aiDifficulties[this.difficulty - 1]; }
+
+    get servingActor() { return this._server; }
+
+    get remainingServe() {
+      if (this.state !== 'serve') return 0;
+      return this._server === 'player'
+        ? Math.max(0, CONFIG.playerServeDelay - this.stateTime, CONFIG.serveIdleDelay - this._serveIdleTime)
+        : Math.max(0, CONFIG.serveDelay - this.stateTime);
+    }
 
     get remainingFuse() {
       if (this.state === 'countdown') return Math.max(0, 3 - Math.floor(this.stateTime));
@@ -89,6 +106,7 @@
       });
       this.rallies = 0;
       this._aiTimer = 0;
+      this._serveIdleTime = 0;
       this._aiError = (0.5 - this.random()) * this._aiConfig.error;
       this._setState('serve');
       this.events.push({ type: 'serve', actor: this._server, round: this.round });
@@ -105,6 +123,7 @@
       this._roundFinished = Math.max(this.playerPoints, this.ghostPoints) >= CONFIG.pointsToWin;
       if (this._roundFinished) {
         this.streak = isPlayer ? this.streak + 1 : 0;
+        this.lastRoundWinner = winner;
         this._finalWin = this.streak >= CONFIG.streakToWin;
         if (this._finalWin) this.winner = 'player';
       }
@@ -118,12 +137,14 @@
       if (this._roundFinished) this.events.push({ type: isPlayer ? 'win' : 'loss', ...info });
       this.ball.vx = this.ball.vy = 0;
       this.player.vx = this.ghost.vx = 0;
-      this._setState('point');
+      this.player.attack = this.ghost.attack = 0;
+      // Completed games keep their final score until the player chooses to continue.
+      this._setState(this._roundFinished && !this._finalWin ? 'roundEnd' : 'point');
       return true;
     }
 
     step(dt, input = {}) {
-      if (this.paused || !Number.isFinite(dt) || dt <= 0) return;
+      if (this.paused || this.state === 'roundEnd' || !Number.isFinite(dt) || dt <= 0) return;
       // A suspended browser tab cannot fast-forward an entire match on return.
       let remaining = Math.min(dt, 0.25);
       const jumpPressed = Boolean(input.jump) && !this._jumpHeld;
@@ -138,7 +159,7 @@
     }
 
     _tick(dt, input, jumpPressed) {
-      if (this.state === 'ready' || this.state === 'celebration') return;
+      if (this.state === 'ready' || this.state === 'roundEnd' || this.state === 'celebration') return;
       this.time += dt;
       this.stateTime += dt;
       for (const body of [this.player, this.ghost]) {
@@ -179,9 +200,17 @@
       this._move(this.player, (Boolean(input.right) - Boolean(input.left)) * CONFIG.playerSpeed,
         jumpPressed, Boolean(input.down), dt, true);
       if (this.state === 'serve') {
-        if (this.stateTime >= CONFIG.serveDelay) {
+        if (this._server === 'player') {
+          const positioning = Boolean(input.left) || Boolean(input.right);
+          this._serveIdleTime = positioning ? 0 : this._serveIdleTime + dt;
+          this.ball.x = clamp(this.player.x + 15,
+            CONFIG.netX + CONFIG.netHalfWidth + this.ball.r + 1, CONFIG.W - this.ball.r - 1);
+        }
+        if (this.remainingServe <= 0) {
           this._setState('playing');
-          this.ball.vx = this._server === 'player' ? -305 : 305;
+          // Far-back serves keep the original flight time to the net and clear it safely.
+          this.ball.vx = this._server === 'player'
+            ? -Math.max(305, (this.ball.x - CONFIG.netX) * 305 / 255) : 305;
           this.ball.vy = -260;
         }
         return;
@@ -240,6 +269,8 @@
 
     _registerHit(body, who, kind) {
       body.touchCooldown = 0.2;
+      // Show the strike pose only when contact really returned the pumpkin.
+      body.attack = 0.2;
       this.rallies++;
       this.totalHits++;
       this.bestRally = Math.max(this.bestRally, this.rallies);
@@ -251,7 +282,6 @@
     _attack(body, who) {
       if (body.cooldown > 0) return;
       body.cooldown = CONFIG.attackCooldown;
-      body.attack = 0.2;
       const b = this.ball;
       const distance = Math.hypot(b.x - body.x, b.y - (body.y - 49));
       const ownSide = who === 'player' ? b.x > CONFIG.netX - 12 : b.x < CONFIG.netX + 12;

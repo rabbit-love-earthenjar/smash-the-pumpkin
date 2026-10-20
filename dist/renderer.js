@@ -11,6 +11,7 @@
       this.particles = [];
       this.trail = [];
       this.shake = 0;
+      this.burst = null;
       this.reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
       this.images = {};
       for (const name of ['stand', 'run', 'jump', 'hit']) {
@@ -26,7 +27,7 @@
       this.paintBackground(this.background.getContext('2d'));
     }
 
-    reset() { this.particles = []; this.trail = []; this.shake = 0; }
+    reset() { this.particles = []; this.trail = []; this.shake = 0; this.burst = null; }
 
     glow(ctx, x, y, radius, color) {
       const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
@@ -157,19 +158,117 @@
         for (let i = 0; i < 12; i++) this.particles.push({ x: event.x, y: event.y, vx: (Math.random() - .5) * 190, vy: (Math.random() - .6) * 190, life: .4, maxLife: .4, size: 2 + Math.random() * 3, color: event.actor === 'player' ? palette.orange : palette.mint, rotation: 0, candy: false });
       }
       if (event.type === 'explosion') {
-        this.shake = this.reducedMotion ? 0 : .55;
-        for (let i = 0; i < (this.reducedMotion ? 35 : 110); i++) {
-          const angle = Math.random() * TAU, force = 110 + Math.random() * 310;
-          this.particles.push({ x: event.x, y: event.y, vx: Math.cos(angle) * force, vy: Math.sin(angle) * force - 100, life: 3.3, maxLife: 3.3, size: 3 + Math.random() * 6, color: [palette.orange, palette.mint, '#d6a9da', '#ffdb8f'][i % 4], rotation: Math.random() * TAU, candy: i % 3 === 0 });
+        const gentle = this.reducedMotion;
+        this.shake = gentle ? 0 : .68;
+        this.burst = { x: event.x, y: event.y, age: 0 };
+        const colors = ['#ffb66e', '#bdedd7', '#dfa7ed', '#ffe192', '#ff98b8'];
+        // The shell bursts first. Candy follows it, rather than looking like small hit sparks.
+        for (let i = 0; i < (gentle ? 12 : 38); i++) {
+          const angle = i / (gentle ? 12 : 38) * TAU + Math.random() * .16;
+          const force = gentle ? 45 + Math.random() * 75 : 190 + Math.random() * 310;
+          this.particles.push({ x: event.x, y: event.y, vx: Math.cos(angle) * force,
+            vy: Math.sin(angle) * force - (gentle ? 25 : 85), life: 1.45, maxLife: 1.45,
+            size: 8 + Math.random() * 13, color: i % 2 ? '#ed793c' : '#ffba62',
+            rotation: angle, spin: gentle ? .4 : (Math.random() - .5) * 9,
+            gravity: gentle ? 55 : 235, kind: 'shell' });
+        }
+        for (let i = 0; i < (gentle ? 18 : 48); i++) {
+          const angle = Math.random() * TAU, force = gentle ? 55 + Math.random() * 70 : 130 + Math.random() * 260;
+          this.particles.push({ x: event.x, y: event.y, vx: Math.cos(angle) * force,
+            vy: Math.sin(angle) * force - (gentle ? 55 : 140), life: 3.8, maxLife: 3.8,
+            size: 5 + Math.random() * 6, color: colors[i % colors.length],
+            rotation: Math.random() * TAU, spin: gentle ? .35 : (Math.random() - .5) * 5,
+            gravity: gentle ? 55 : 145, delay: gentle ? .15 : .18 + Math.random() * .2,
+            candy: true, striped: i % 2 === 0 });
+        }
+        // A finite second wave falls across the whole court after the central blast.
+        for (let i = 0; i < (gentle ? 16 : 62); i++) {
+          this.particles.push({ x: 25 + Math.random() * 910, y: -20 - Math.random() * 120,
+            vx: (Math.random() - .5) * (gentle ? 18 : 65), vy: gentle ? 38 : 65 + Math.random() * 55,
+            life: 5.6, maxLife: 5.6, size: 5 + Math.random() * 5,
+            color: colors[i % colors.length], rotation: Math.random() * TAU,
+            spin: gentle ? .2 : (Math.random() - .5) * 3, gravity: gentle ? 8 : 18,
+            delay: .5 + Math.random() * 1.4, candy: true, striped: i % 3 === 0 });
+        }
+        for (let i = 0; i < (gentle ? 8 : 24); i++) {
+          const angle = Math.random() * TAU, force = gentle ? 60 : 210 + Math.random() * 260;
+          this.particles.push({ x: event.x, y: event.y, vx: Math.cos(angle) * force,
+            vy: Math.sin(angle) * force, life: 1.2, maxLife: 1.2,
+            size: 2 + Math.random() * 3, color: '#fff0b7', rotation: angle,
+            gravity: 30, kind: 'star' });
         }
       }
+      this.particles = this.particles.slice(-240);
+    }
+
+    explosion(c, dt) {
+      if (!this.burst) return;
+      this.burst.age += dt;
+      const { x, y, age } = this.burst;
+      if (age > 1.3) { this.burst = null; return; }
+      const fade = Math.max(0, 1 - age / 1.3);
+      c.save();
+      if (this.reducedMotion) {
+        c.globalAlpha = fade * .6;
+        this.glow(c, x, y, 145, '#ffb46d80');
+      } else {
+        // One warm flash, a large soft core and expanding rings emphasize the final blast.
+        if (age < .22) {
+          c.fillStyle = `rgba(255,221,164,${(1 - age / .22) * .25})`;
+          c.fillRect(0, 0, 960, 540);
+        }
+        c.globalAlpha = fade;
+        this.glow(c, x, y, 110 + age * 240, '#ffad5d70');
+        for (let ring = 0; ring < 3; ring++) {
+          const progress = age - ring * .09;
+          if (progress < 0) continue;
+          c.globalAlpha = Math.max(0, 1 - progress / .95) * (ring ? .65 : .9);
+          c.strokeStyle = ring % 2 ? '#ff9f59' : '#fff0bc';
+          c.lineWidth = Math.max(1, 11 - progress * 10 - ring * 2);
+          c.beginPath(); c.arc(x, y, 45 + progress * (ring ? 290 : 390), 0, TAU); c.stroke();
+        }
+        c.globalAlpha = Math.max(0, 1 - age / .45) * .8;
+        c.fillStyle = '#ffe6a4';
+        c.beginPath();
+        for (let i = 0; i < 24; i++) {
+          const angle = i / 24 * TAU, radius = (i % 2 ? 22 : 85 + age * 185);
+          const px = x + Math.cos(angle) * radius, py = y + Math.sin(angle) * radius;
+          if (i) c.lineTo(px, py); else c.moveTo(px, py);
+        }
+        c.closePath(); c.fill();
+      }
+      c.restore();
+    }
+
+    particle(c, p) {
+      c.save();
+      c.globalAlpha = Math.max(0, Math.min(1, p.life / Math.min(.7, p.maxLife)));
+      c.translate(p.x, p.y); c.rotate(p.rotation); c.fillStyle = p.color;
+      const s = p.size;
+      if (p.candy) {
+        c.beginPath(); c.moveTo(-s, 0); c.lineTo(-s * 1.7, -s * .7); c.lineTo(-s * 1.7, s * .7); c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(s, 0); c.lineTo(s * 1.7, -s * .7); c.lineTo(s * 1.7, s * .7); c.closePath(); c.fill();
+        c.fillRect(-s, -s * .62, s * 2, s * 1.24);
+        c.fillStyle = '#fff7dc'; c.globalAlpha *= .55;
+        if (p.striped) { c.fillRect(-s * .55, -s * .62, s * .28, s * 1.24); c.fillRect(s * .28, -s * .62, s * .28, s * 1.24); }
+        else c.fillRect(-s * .65, -s * .4, s * .9, s * .18);
+      } else if (p.kind === 'shell') {
+        c.beginPath(); c.moveTo(-s, -s * .55); c.lineTo(s * .75, -s * .7); c.lineTo(s * .4, s); c.lineTo(-s * .45, s * .55); c.closePath(); c.fill();
+        c.strokeStyle = '#9e482d'; c.lineWidth = 1.5;
+        c.beginPath(); c.moveTo(-s * .3, -s * .5); c.lineTo(s * .1, s * .65); c.stroke();
+      } else if (p.kind === 'star') {
+        c.fillRect(-s * 1.7, -s * .35, s * 3.4, s * .7);
+        c.fillRect(-s * .35, -s * 1.7, s * .7, s * 3.4);
+      } else c.fillRect(-s / 2, -s / 2, s, s);
+      c.restore();
     }
 
     render(game, dt) {
-      if (!game.paused) this.time += dt;
+      const frozen = game.paused || game.state === 'roundEnd';
+      if (!frozen) this.time += dt;
       const c = this.ctx;
       c.save();
-      if (this.shake > 0 && !game.paused) { this.shake = Math.max(0, this.shake - dt); c.translate(Math.sin(this.time * 91) * this.shake * 7, Math.cos(this.time * 73) * this.shake * 5); }
+      if (this.shake > 0 && !frozen) { this.shake = Math.max(0, this.shake - dt); c.translate(Math.sin(this.time * 91) * this.shake * 7, Math.cos(this.time * 73) * this.shake * 5); }
       c.drawImage(this.background, 0, 0);
       // A few drifting fireflies instead of rain over the play area.
       for (let i = 0; i < 9; i++) { const x = ((i * 121 + this.time * (i % 2 ? 3 : -2)) % 960 + 960) % 960, y = 170 + (i * 37) % 215 + Math.sin(this.time + i) * 9; c.globalAlpha = .2 + Math.sin(this.time * .7 + i) * .12; c.fillStyle = i % 2 ? palette.mint : palette.orange; c.fillRect(x, y, 2, 2); } c.globalAlpha = 1;
@@ -189,7 +288,8 @@
       } else this.trail = [];
       if (!['explosion', 'celebration'].includes(game.state)) {
         const b = game.ball, bomb = game.state === 'countdown';
-        const radius = bomb ? 48 + Math.sin(this.time * 16) * (this.reducedMotion ? 0 : 2) : b.r;
+        const swell = bomb ? Math.max(0, Math.min(1, (game.stateTime - 2.35) / .85)) : 0;
+        const radius = bomb ? 48 + swell * (this.reducedMotion ? 10 : 34) + Math.sin(this.time * 16) * (this.reducedMotion ? 0 : 2 + swell * 2) : b.r;
         const y = game.state === 'ready' ? b.y + Math.sin(this.time * 1.4) * 7 : b.y;
         this.pumpkin(c, b.x, y, radius, bomb ? Math.sin(this.time * 25) * .04 : b.spin * .12, bomb);
         if (bomb) {
@@ -197,15 +297,13 @@
           this.glow(c, b.x + 42, y - radius - 12, 20, '#ffbd7b88'); c.fillStyle = '#ffe7ae'; c.beginPath(); c.arc(b.x + 42, y - radius - 12, 4, 0, TAU); c.fill();
         }
       }
-      if (game.state === 'explosion') {
-        const t = game.stateTime; c.strokeStyle = `rgba(255,182,112,${Math.max(0, .65 - t)})`; c.lineWidth = 3; c.beginPath(); c.arc(480, 230, 35 + t * 210, 0, TAU); c.stroke();
-      }
-      const fxDt = game.paused ? 0 : dt;
+      const fxDt = frozen ? 0 : dt;
+      this.explosion(c, fxDt);
       for (const p of this.particles) {
-        p.life -= fxDt; p.x += p.vx * fxDt; p.y += p.vy * fxDt; p.vy += 160 * fxDt; p.rotation += fxDt * 3;
-        c.save(); c.globalAlpha = Math.max(0, Math.min(1, p.life)); c.translate(p.x, p.y); c.rotate(p.rotation); c.fillStyle = p.color;
-        if (p.candy) { c.fillRect(-p.size, -p.size * .6, p.size * 2, p.size * 1.2); c.beginPath(); c.moveTo(-p.size, 0); c.lineTo(-p.size * 1.8, -p.size * .8); c.lineTo(-p.size * 1.8, p.size * .8); c.closePath(); c.fill(); c.beginPath(); c.moveTo(p.size, 0); c.lineTo(p.size * 1.8, -p.size * .8); c.lineTo(p.size * 1.8, p.size * .8); c.closePath(); c.fill(); }
-        else c.fillRect(-p.size / 2, -p.size / 2, p.size, p.size); c.restore();
+        if (p.delay > 0) { p.delay = Math.max(0, p.delay - fxDt); continue; }
+        p.life -= fxDt; p.x += p.vx * fxDt; p.y += p.vy * fxDt;
+        p.vy += (p.gravity ?? 160) * fxDt; p.rotation += fxDt * (p.spin ?? 3);
+        this.particle(c, p);
       }
       this.particles = this.particles.filter(p => p.life > 0);
       c.restore();

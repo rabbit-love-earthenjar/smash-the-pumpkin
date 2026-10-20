@@ -16,6 +16,14 @@
   <meta name="twitter:image" content="https://smash-the-pumpkin.dongfangjin69.chatgpt.site/assets/share.jpg">
   <meta name="twitter:description" content="和小幽灵 来一场南瓜排球。连赢三局，解锁万圣节惊喜。免费浏览器小游戏。">
   <title>打爆南瓜 · 京都万圣夜</title>
+  <style>
+    .loading-screen{position:fixed;inset:0;z-index:100;background:#14131c;color:#f5dfbd;display:grid;place-content:center;text-align:center;font:14px system-ui;transition:opacity .25s}
+    .loading-screen.hidden{display:none}.loading-screen.leaving{opacity:0;pointer-events:none}
+    .pumpkin-track{width:220px;height:100px;border-bottom:1px solid #ff9b5045;position:relative;margin-bottom:24px}
+    .loading-pumpkin{position:absolute;bottom:0;left:0;width:66px;height:70px;animation:pumpkin-roll 1.6s ease-in-out infinite alternate;filter:drop-shadow(0 0 16px #ff9b5050)}
+    @keyframes pumpkin-roll{from{transform:translateX(0) rotate(-25deg)}to{transform:translateX(154px) rotate(335deg)}}
+    @media(prefers-reduced-motion:reduce){.loading-pumpkin{animation:none;left:77px}}
+  </style>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ctext y='32' font-size='34'%3E🎃%3C/text%3E%3C/svg%3E">
   <style>
 :root{
@@ -1428,15 +1436,90 @@ footer i{
   body .game-shell{margin-top:14px}
   body .touch-controls,body .touch-controls>div{width:100%;gap:12px}
   body .touch-controls button{flex:1;min-width:0;height:60px;font-size:16px;font-weight:600}
-  body .touch-controls [data-key=left]::before{content:'◀ ';margin-right:8px}
-  body .touch-controls [data-key=right]::after{content:' ▶';margin-left:8px}
+  body .touch-controls [data-key=left]::before,body .touch-controls [data-key=right]::after{content:none}
   body.is-playing .touch-controls{width:auto}
   body .touch-hint{display:block;margin:15px 0 12px;text-align:center;font-size:11px;color:var(--muted)}
+}
+
+/* The play area includes both court and thumb controls in native fullscreen. */
+body.fullscreen-play{overflow:hidden;overscroll-behavior:none;padding:0}
+body.fullscreen-play .masthead,body.fullscreen-play .intro,body.fullscreen-play footer,
+body.fullscreen-play .controls,body.fullscreen-play .touch-hint{display:none}
+body.fullscreen-play #play-area{
+  position:fixed;inset:0;z-index:20;width:100%;height:100vh;height:100dvh;
+  display:block;background:#171321;overflow:hidden;
+}
+body.fullscreen-play #play-frame{
+  position:absolute;inset:0;width:100%;height:100%;display:flex;flex-direction:column;gap:0;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+body.fullscreen-play .game-shell{margin:0;flex:1;min-height:0;border:0;border-radius:0;display:flex;flex-direction:column;box-shadow:none}
+body.fullscreen-play .game-toolbar{flex:0 0 65px;height:65px;padding:8px 14px}
+body.fullscreen-play .court{flex:1;min-height:0;aspect-ratio:auto;background:radial-gradient(ellipse at center,#30223b,#171321);overflow:hidden}
+body.fullscreen-play .court canvas{width:100%;height:100%;object-fit:contain}
+body.fullscreen-play .game-bottom{flex:0 0 30px;height:30px;padding:0 14px}
+body.fullscreen-play .stage-caption{display:none}
+body.fullscreen-play .overlay{overflow:auto;padding:12px}
+body.fullscreen-play .touch-controls{position:static;inset:auto;flex:0 0 auto;margin:0;width:100%;padding:8px 14px;border:0;border-top:1px solid #514038;border-radius:0;background:#1c1924;box-shadow:none}
+body.fullscreen-play .touch-controls>div{display:flex;width:100%;gap:14px}
+body.fullscreen-play .touch-controls button{height:62px;font-size:21px;flex:1;touch-action:none}
+body.fullscreen-play .game-actions>span{display:none}
+#fullscreen-btn[aria-pressed=true]{color:var(--orange)}
+#round-overlay{background:#171321c9;backdrop-filter:blur(3px)}
+#round-overlay .compact-panel{text-align:center}
+#round-overlay h2{color:var(--orange)}
+.serve-hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:2;margin:0;padding:7px 14px;border:1px solid #ffb46a66;border-radius:20px;background:#1b1525cf;color:#ffdbac;font-size:12px;white-space:nowrap;pointer-events:none}
+.victory-title{display:inline-block;padding:10px 22px;border:1px solid #ffc779;border-radius:999px;color:#ffe6ad;background:linear-gradient(100deg,#9a4d262e,#ffc06d28,#9a4d262e);box-shadow:0 0 28px #ff9b5040;font-size:23px;font-weight:800;letter-spacing:3px}
+.victory-title::before,.victory-title::after{content:'✦';margin:0 9px;color:#ffba60}
+.end-panel .victory-tag{display:block;font-size:10px;letter-spacing:3px;color:#f5bf7d;margin:10px 0}
+.end-panel h2{font-size:52px;margin:15px 0}
+.end-panel .end-spark{display:none}
+@media(max-width:760px),(pointer:coarse){
+  body .game-toolbar{height:76px}
+  body.fullscreen-play .game-toolbar{height:76px;flex-basis:76px}
+  body .game-actions{gap:5px}
+  body .icon-btn{width:30px;height:30px}
+  body .scoreboard{gap:6px}
+  body .competitor{font-size:8px}
+  body .scoreboard strong{font-size:21px}
+  body .victory-title{font-size:19px;letter-spacing:1px;padding:10px 13px}
+  body .end-panel h2{font-size:44px}
+}
+@media(orientation:portrait) and (max-width:760px){
+  body.fullscreen-play #play-frame{
+    inset:auto;left:50%;top:50%;width:100vh;width:100dvh;height:100vw;height:100dvw;
+    transform:translate(-50%,-50%) rotate(90deg);
+    padding:env(safe-area-inset-left) env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom);
+  }
+}
+@media(orientation:landscape) and (max-height:600px),(orientation:portrait) and (max-width:760px){
+  body.fullscreen-play .game-toolbar{flex:0 0 42px;height:42px;display:flex;justify-content:space-between;gap:8px;padding:4px 12px}
+  body.fullscreen-play .scoreboard{order:0}
+  body.fullscreen-play .streak-wrap{order:1;margin:0}
+  body.fullscreen-play .game-actions{order:2}
+  body.fullscreen-play .streak-wrap>.tiny-label{display:none}
+  body.fullscreen-play .game-bottom{display:none}
+  body.fullscreen-play .touch-controls{padding:5px 18px}
+  body.fullscreen-play .touch-controls>div{justify-content:space-between}
+  body.fullscreen-play .touch-controls button{flex:0 1 28%;height:46px}
+  body.fullscreen-play .compact-panel h2{font-size:24px;margin:8px 0}
+  body.fullscreen-play .compact-panel p{margin:8px 0 14px}
+  body.fullscreen-play .end-panel{display:grid;grid-template-columns:1fr 1fr;align-items:center;column-gap:26px;max-width:650px}
+  body.fullscreen-play .end-panel .mini-tag,body.fullscreen-play .end-panel>p{display:none}
+  body.fullscreen-play .end-panel h2{grid-column:1;grid-row:1 / span 3;font-size:43px;margin:0}
+  body.fullscreen-play .end-panel .victory-title{grid-column:2;grid-row:1;font-size:18px;letter-spacing:0}
+  body.fullscreen-play .end-panel .victory-tag{display:none}
+  body.fullscreen-play .end-panel .end-stats{grid-column:2;grid-row:2;margin:8px 0}
+  body.fullscreen-play .end-panel #replay-btn{grid-column:2;grid-row:3;padding:9px 17px}
 }
 
 </style>
 </head>
 <body>
+  <div id="loading-screen" class="loading-screen" role="status" aria-live="polite">
+    <div class="pumpkin-track" aria-hidden="true"><svg class="loading-pumpkin" viewBox="0 0 72 76"><path d="M34 19q-3-12 8-16l4 7q-8 0-7 10" fill="#a3b784"/><ellipse cx="36" cy="45" rx="34" ry="29" fill="#f78b3b"/><ellipse cx="36" cy="45" rx="21" ry="29" fill="#ffa34e"/><path d="m14 39 13-10 3 16Zm28 6 3-16 13 10ZM16 50l11 5 7-5 8 5 13-5-6 13-10-3-8 4-10-5Z" fill="#382033"/></svg></div>
+    <span data-i18n="loading">南瓜滚来啦…</span>
+  </div>
   <div class="grain" aria-hidden="true"></div>
   <header class="masthead">
     <a class="brand" href="#" data-i18n-aria="home" aria-label="打爆南瓜 首页"><svg viewBox="0 0 40 44" aria-hidden="true"><path d="M7 35V19a13 13 0 0 1 26 0v18l-6-4-7 5-7-5-6 4Z" fill="currentColor"/><ellipse cx="15" cy="20" rx="2" ry="3" fill="#14131c"/><ellipse cx="25" cy="20" rx="2" ry="3" fill="#14131c"/></svg><span><b data-i18n="title">打爆南瓜</b><small data-i18n="subtitle">万圣夜小游戏</small></span></a>
@@ -1448,25 +1531,31 @@ footer i{
       <div class="challenge"><span class="challenge-star" aria-hidden="true">✳</span><div><strong data-i18n="challenge">连赢三局，解锁惊喜。</strong><span data-i18n="challengeHint">小心，最后的南瓜有点「爆」脾气。</span></div></div>
     </section>
 
+    <div id="play-area" class="play-area"><div id="play-frame">
     <section class="game-shell" data-i18n-aria="gameLabel" aria-label="打爆南瓜小游戏">
       <div class="game-toolbar">
         <div class="streak-wrap"><span class="tiny-label" data-i18n="streakLabel">连胜</span><div id="streak-pips" class="streak-pips" aria-label="当前0连胜"><span>🎃</span><span>🎃</span><span>🎃</span></div><span id="streak-text">0 / 3 连胜</span></div>
         <div class="scoreboard" data-i18n-aria="scoreboard" aria-label="本局比分"><span class="competitor ghost-dot"><span data-i18n="ghost">小幽灵</span> <em id="ai-level" data-i18n-title="difficultyHint" title="连胜后难度逐局提高">AI 1/3</em></span><strong><span id="ghost-score">0</span><i>:</i><span id="player-score">0</span></strong><span class="competitor fox-dot" data-i18n="fox">小狐狸</span></div>
-        <div class="game-actions"><span id="round-label">第 01 局</span><button type="button" id="sound-btn" class="icon-btn" aria-label="关闭声音" aria-pressed="false" data-i18n-title="soundToggle" title="声音开关"><svg id="sound-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4V5Zm5 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button><button type="button" id="pause-btn" class="icon-btn" aria-label="暂停游戏" data-i18n-title="pauseTip" title="暂停 / Esc" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button></div>
+        <div class="game-actions"><span id="round-label">第 01 局</span><button type="button" id="fullscreen-btn" class="icon-btn" data-i18n-aria="fullscreen" data-i18n-title="fullscreen" aria-label="全屏游玩" title="全屏游玩" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button><button type="button" id="sound-btn" class="icon-btn" aria-label="关闭声音" aria-pressed="false" data-i18n-title="soundToggle" title="声音开关"><svg id="sound-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m11 5-6 4H2v6h3l6 4V5Zm5 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button><button type="button" id="pause-btn" class="icon-btn" aria-label="暂停游戏" data-i18n-title="pauseTip" title="暂停 / Esc" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button></div>
       </div>
       <div class="court" id="court">
         <canvas id="game" width="960" height="540" tabindex="0" data-i18n-aria="canvasLabel" aria-label="打爆南瓜球场。A向左，D向右，W跳跃，S快速下落，空格挥击，Esc暂停。每局先得3分，连续赢3局解锁结局。" data-i18n="canvasFallback">你的浏览器需要支持 Canvas 才能游玩。</canvas>
+        <p id="serve-hint" class="serve-hint hidden" role="status"></p>
         <div class="stage-caption" aria-hidden="true"><span><i></i><span data-i18n="courtyard">神社庭院</span></span><span data-i18n="location">京都 · 万圣夜</span></div>
         <div class="overlay" id="start-overlay">
           <div class="start-panel"><span class="mini-tag" data-i18n="startTag">不给糖，就再接一球。</span><h2><span data-i18n="title">打爆南瓜</span><i>✦</i></h2><p data-i18n="startHint">把南瓜打过网，别让它落在你这边。</p><button type="button" class="primary-btn" id="start-btn"><span data-i18n="start">开始对打</span> <span>↗</span></button><small data-i18n="rules">每局先得 3 分 · 连赢 3 局过关 · 输局重算连胜</small></div>
         </div>
         <div class="overlay hidden" id="pause-overlay"><div class="compact-panel"><span class="mini-tag" data-i18n="pauseTag">歇一小会儿</span><h2 data-i18n="pauseTitle">幽灵也要歇一歇。</h2><p data-i18n="pauseHint">准备好就继续，南瓜等着你。</p><button type="button" class="primary-btn" id="resume-btn"><span data-i18n="continue">继续对打</span> <span>▶</span></button><button type="button" class="text-btn" id="restart-btn" data-i18n="restart">重新挑战</button></div></div>
+        <div class="overlay hidden" id="round-overlay"><div class="compact-panel"><span class="mini-tag" data-i18n="roundFinished">本局结束</span><h2 id="round-result"></h2><p id="round-summary"></p><button type="button" class="primary-btn" id="next-round-btn" data-i18n="nextRound">继续下一场</button></div></div>
         <div class="toast hidden" id="toast" role="status"></div>
         <div class="fuse-caption hidden" id="fuse-caption"><span data-i18n="fuseCaption">咦，南瓜怎么开始倒计时了？</span><strong id="fuse-number">3</strong></div>
-        <div class="overlay celebration hidden" id="end-overlay"><div class="end-panel"><span class="mini-tag" data-i18n="endTag">三连胜，一份甜蜜惊喜。</span><div class="end-spark" aria-hidden="true">✦</div><h2>happy<br><span>hallow day</span></h2><p data-i18n="endHint">南瓜炸成了糖果，今晚的快乐归你啦。</p><div class="end-stats"><span><b>3</b> <span data-i18n="endStreak">连胜达成</span></span><span><b id="end-hits">0</b> <span data-i18n="endHits">次精彩回击</span></span></div><button type="button" class="primary-btn" id="replay-btn"><span data-i18n="replay">再来一场</span> <span>↻</span></button></div></div>
+        <div class="overlay celebration hidden" id="end-overlay"><div class="end-panel"><span class="mini-tag" data-i18n="endTag">三连胜，一份甜蜜惊喜。</span><div class="end-spark" aria-hidden="true">✦</div><span class="victory-tag" data-i18n="victoryTag">三连胜限定称号</span><strong class="victory-title" data-i18n="victoryTitle">南瓜爆破王</strong><h2>happy<br><span>hallow day</span></h2><p data-i18n="endHint">南瓜炸成了糖果，今晚的快乐归你啦。</p><div class="end-stats"><span><b>3</b> <span data-i18n="endStreak">连胜达成</span></span><span><b id="end-hits">0</b> <span data-i18n="endHits">次精彩回击</span></span></div><button type="button" class="primary-btn" id="replay-btn"><span data-i18n="replay">再来一场</span> <span>↻</span></button></div></div>
       </div>
       <div class="game-bottom"><span><span class="live-dot"></span><span id="game-status">小幽灵已就位，等你开球。</span></span><span><span data-i18n="bestRally">最长回合</span> <b id="best-rally">00</b></span></div>
     </section>
+    <p class="touch-hint" data-i18n="mobileHint">左右移动，自动起跳与挥击。</p>
+    <div class="touch-controls" data-i18n-aria="touchLabel" aria-label="触屏操作"><div><button type="button" data-key="left" data-i18n="leftButton" data-i18n-aria="left" aria-label="向左移动">左</button><button type="button" data-key="right" data-i18n="rightButton" data-i18n-aria="right" aria-label="向右移动">右</button></div></div>
+    </div></div>
 
     <section class="controls" data-i18n-aria="controlsLabel" aria-label="操作说明">
       <div class="control-heading"><span class="tiny-label" data-i18n="controlsTag">怎么玩</span><h3 data-i18n="controlsHeading">一点默契，一点捣蛋。</h3></div>
@@ -1474,8 +1563,6 @@ footer i{
       <div class="key-guide"><kbd class="space-key">SPACE</kbd><div><b data-i18n="attackLabel">挥击南瓜</b><span data-i18n="attackHint">靠近时按空格，跳起来也能回击</span></div></div>
       <div class="rule-note"><span>01—03</span><p data-i18n="ruleNote">连赢三局，收下万圣节惊喜</p></div>
     </section>
-    <p class="touch-hint" data-i18n="mobileHint">左右移动，自动起跳与挥击。</p>
-    <div class="touch-controls" data-i18n-aria="touchLabel" aria-label="触屏操作"><div><button type="button" data-key="left" data-i18n="left" data-i18n-aria="left" aria-label="向左移动">向左移动</button><button type="button" data-key="right" data-i18n="right" data-i18n-aria="right" aria-label="向右移动">向右移动</button></div></div>
     <p id="announcer" class="sr-only" aria-live="polite"></p>
   </main>
   <footer><span data-i18n="footer">京都夜神社 × 万圣夜小游戏</span><span><span data-i18n="footerWish">祝你度过一个「鬼」开心的夜晚</span> <span class="footer-star">✦</span></span></footer>
@@ -1485,6 +1572,19 @@ footer i{
   // Offline text only: no network, dependencies or gameplay state in the language pack.
   const translations = {
     zh: {
+      chooseServe: "左右选择站位 · {seconds} 秒后发球", choosingServe: "选择发球位置，松开后自动发球",
+      victoryTag: "三连胜限定称号", victoryTitle: "南瓜爆破王",
+      loading: "南瓜滚来啦…",
+      leftButton: "左",
+      rightButton: "右",
+      fullscreen: "全屏游玩",
+      exitFullscreen: "退出全屏",
+      roundFinished: "本局结束",
+      roundWon: "这一局，你赢啦！",
+      roundLost: "这一局，小幽灵赢啦。",
+      roundSummary: "{ghost} : {player} · 当前 {count} / 3 连胜",
+      nextRound: "继续下一场",
+      status_roundEnd: "本局结束 · 按「继续下一场」开局。",
       mobileHint: '左右移动，自动起跳与挥击。', status_mobilePlaying: '左右移动，接住南瓜！',
       difficultyHint: '连胜后难度逐局提高',
       countdownLabel: '距离万圣节', countdownUnit: '天',
@@ -1520,6 +1620,19 @@ footer i{
       status_celebration: 'happy hallow day · 今晚的快乐归你啦。', status_paused: '已暂停 · 按 Esc 或「继续对打」返回球场。'
     },
     ja: {
+      chooseServe: "左右で位置を選ぼう · あと{seconds}秒でサーブ", choosingServe: "サーブ位置を選び、離すと自動でサーブ",
+      victoryTag: "3連勝のスペシャル称号", victoryTitle: "かぼちゃ爆破王",
+      loading: "カボチャが転がってきた…",
+      leftButton: "左",
+      rightButton: "右",
+      fullscreen: "全画面で遊ぶ",
+      exitFullscreen: "全画面を終了",
+      roundFinished: "ゲーム終了",
+      roundWon: "このゲームはあなたの勝ち！",
+      roundLost: "このゲームはオバケの勝ち。",
+      roundSummary: "{ghost} : {player} · 現在 {count} / 3 連勝",
+      nextRound: "次のゲームへ",
+      status_roundEnd: "ゲーム終了 · 「次のゲームへ」でスタート。",
       mobileHint: '左右に移動。ジャンプとアタックは自動です。', status_mobilePlaying: '左右に動いて、カボチャを打ち返そう！',
       difficultyHint: '連勝すると難易度が上がります',
       countdownLabel: 'ハロウィンまで', countdownUnit: '日',
@@ -1555,6 +1668,19 @@ footer i{
       status_celebration: 'happy hallow day · 楽しい夜を！', status_paused: '一時停止中 · Escか「対戦を再開」でコートへ。'
     },
     en: {
+      chooseServe: "Choose your position · Serving in {seconds}s", choosingServe: "Move to choose where to serve. Release to serve.",
+      victoryTag: "THREE-WIN TITLE UNLOCKED", victoryTitle: "Pumpkin Blaster",
+      loading: "Pumpkin rolling in…",
+      leftButton: "Left",
+      rightButton: "Right",
+      fullscreen: "Play fullscreen",
+      exitFullscreen: "Exit fullscreen",
+      roundFinished: "GAME OVER",
+      roundWon: "You won this game!",
+      roundLost: "The ghost won this game.",
+      roundSummary: "{ghost} : {player} · Streak {count} / 3",
+      nextRound: "Next game",
+      status_roundEnd: "Game finished · Tap Next game to start.",
       mobileHint: 'Move left or right. Jumping and hitting are automatic.', status_mobilePlaying: 'Move left or right and return the pumpkin!',
       difficultyHint: 'Difficulty rises after each game won',
       countdownLabel: 'HALLOWEEN IN', countdownUnit: 'DAYS',
@@ -1633,7 +1759,7 @@ footer i{
       Object.freeze({ name: '挑战', speed: 258, error: 265, reactionMin: 0.10, reactionMax: 0.22, attackWindow: 0.13 })
     ]),
     attackRange: 116, attackCooldown: 0.34, pointsToWin: 3,
-    streakToWin: 3, serveDelay: 0.78, pointDelay: 1.25,
+    streakToWin: 3, serveDelay: 0.78, playerServeDelay: 2.6, serveIdleDelay: 0.85, pointDelay: 1.25,
     roundDelay: 2.1, countdownDuration: 3.2, explosionDuration: 1.2
   });
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -1666,7 +1792,9 @@ footer i{
       this.totalHits = 0;
       this.winner = null;
       this.pointWinner = null;
+      this.lastRoundWinner = null;
       this._server = 'player';
+      this._serveIdleTime = 0;
       this._jumpHeld = false;
       this._roundFinished = false;
       this._finalWin = false;
@@ -1680,11 +1808,26 @@ footer i{
       if (this.state === 'ready') this._prepareServe();
     }
 
+    continueNextRound() {
+      if (this.state !== 'roundEnd' || !this._roundFinished || this._finalWin) return false;
+      this._prepareServe();
+      return true;
+    }
+
     pause(value = true) { this.paused = Boolean(value); }
 
     get difficulty() { return Math.min(3, this.streak + 1); }
 
     get _aiConfig() { return CONFIG.aiDifficulties[this.difficulty - 1]; }
+
+    get servingActor() { return this._server; }
+
+    get remainingServe() {
+      if (this.state !== 'serve') return 0;
+      return this._server === 'player'
+        ? Math.max(0, CONFIG.playerServeDelay - this.stateTime, CONFIG.serveIdleDelay - this._serveIdleTime)
+        : Math.max(0, CONFIG.serveDelay - this.stateTime);
+    }
 
     get remainingFuse() {
       if (this.state === 'countdown') return Math.max(0, 3 - Math.floor(this.stateTime));
@@ -1708,6 +1851,7 @@ footer i{
       });
       this.rallies = 0;
       this._aiTimer = 0;
+      this._serveIdleTime = 0;
       this._aiError = (0.5 - this.random()) * this._aiConfig.error;
       this._setState('serve');
       this.events.push({ type: 'serve', actor: this._server, round: this.round });
@@ -1724,6 +1868,7 @@ footer i{
       this._roundFinished = Math.max(this.playerPoints, this.ghostPoints) >= CONFIG.pointsToWin;
       if (this._roundFinished) {
         this.streak = isPlayer ? this.streak + 1 : 0;
+        this.lastRoundWinner = winner;
         this._finalWin = this.streak >= CONFIG.streakToWin;
         if (this._finalWin) this.winner = 'player';
       }
@@ -1737,12 +1882,14 @@ footer i{
       if (this._roundFinished) this.events.push({ type: isPlayer ? 'win' : 'loss', ...info });
       this.ball.vx = this.ball.vy = 0;
       this.player.vx = this.ghost.vx = 0;
-      this._setState('point');
+      this.player.attack = this.ghost.attack = 0;
+      // Completed games keep their final score until the player chooses to continue.
+      this._setState(this._roundFinished && !this._finalWin ? 'roundEnd' : 'point');
       return true;
     }
 
     step(dt, input = {}) {
-      if (this.paused || !Number.isFinite(dt) || dt <= 0) return;
+      if (this.paused || this.state === 'roundEnd' || !Number.isFinite(dt) || dt <= 0) return;
       // A suspended browser tab cannot fast-forward an entire match on return.
       let remaining = Math.min(dt, 0.25);
       const jumpPressed = Boolean(input.jump) && !this._jumpHeld;
@@ -1757,7 +1904,7 @@ footer i{
     }
 
     _tick(dt, input, jumpPressed) {
-      if (this.state === 'ready' || this.state === 'celebration') return;
+      if (this.state === 'ready' || this.state === 'roundEnd' || this.state === 'celebration') return;
       this.time += dt;
       this.stateTime += dt;
       for (const body of [this.player, this.ghost]) {
@@ -1798,9 +1945,17 @@ footer i{
       this._move(this.player, (Boolean(input.right) - Boolean(input.left)) * CONFIG.playerSpeed,
         jumpPressed, Boolean(input.down), dt, true);
       if (this.state === 'serve') {
-        if (this.stateTime >= CONFIG.serveDelay) {
+        if (this._server === 'player') {
+          const positioning = Boolean(input.left) || Boolean(input.right);
+          this._serveIdleTime = positioning ? 0 : this._serveIdleTime + dt;
+          this.ball.x = clamp(this.player.x + 15,
+            CONFIG.netX + CONFIG.netHalfWidth + this.ball.r + 1, CONFIG.W - this.ball.r - 1);
+        }
+        if (this.remainingServe <= 0) {
           this._setState('playing');
-          this.ball.vx = this._server === 'player' ? -305 : 305;
+          // Far-back serves keep the original flight time to the net and clear it safely.
+          this.ball.vx = this._server === 'player'
+            ? -Math.max(305, (this.ball.x - CONFIG.netX) * 305 / 255) : 305;
           this.ball.vy = -260;
         }
         return;
@@ -1859,6 +2014,8 @@ footer i{
 
     _registerHit(body, who, kind) {
       body.touchCooldown = 0.2;
+      // Show the strike pose only when contact really returned the pumpkin.
+      body.attack = 0.2;
       this.rallies++;
       this.totalHits++;
       this.bestRally = Math.max(this.bestRally, this.rallies);
@@ -1870,7 +2027,6 @@ footer i{
     _attack(body, who) {
       if (body.cooldown > 0) return;
       body.cooldown = CONFIG.attackCooldown;
-      body.attack = 0.2;
       const b = this.ball;
       const distance = Math.hypot(b.x - body.x, b.y - (body.y - 49));
       const ownSide = who === 'player' ? b.x > CONFIG.netX - 12 : b.x < CONFIG.netX + 12;
@@ -1967,6 +2123,7 @@ footer i{
       this.particles = [];
       this.trail = [];
       this.shake = 0;
+      this.burst = null;
       this.reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
       this.images = {};
       for (const name of ['stand', 'run', 'jump', 'hit']) {
@@ -1982,7 +2139,7 @@ footer i{
       this.paintBackground(this.background.getContext('2d'));
     }
 
-    reset() { this.particles = []; this.trail = []; this.shake = 0; }
+    reset() { this.particles = []; this.trail = []; this.shake = 0; this.burst = null; }
 
     glow(ctx, x, y, radius, color) {
       const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
@@ -2113,19 +2270,117 @@ footer i{
         for (let i = 0; i < 12; i++) this.particles.push({ x: event.x, y: event.y, vx: (Math.random() - .5) * 190, vy: (Math.random() - .6) * 190, life: .4, maxLife: .4, size: 2 + Math.random() * 3, color: event.actor === 'player' ? palette.orange : palette.mint, rotation: 0, candy: false });
       }
       if (event.type === 'explosion') {
-        this.shake = this.reducedMotion ? 0 : .55;
-        for (let i = 0; i < (this.reducedMotion ? 35 : 110); i++) {
-          const angle = Math.random() * TAU, force = 110 + Math.random() * 310;
-          this.particles.push({ x: event.x, y: event.y, vx: Math.cos(angle) * force, vy: Math.sin(angle) * force - 100, life: 3.3, maxLife: 3.3, size: 3 + Math.random() * 6, color: [palette.orange, palette.mint, '#d6a9da', '#ffdb8f'][i % 4], rotation: Math.random() * TAU, candy: i % 3 === 0 });
+        const gentle = this.reducedMotion;
+        this.shake = gentle ? 0 : .68;
+        this.burst = { x: event.x, y: event.y, age: 0 };
+        const colors = ['#ffb66e', '#bdedd7', '#dfa7ed', '#ffe192', '#ff98b8'];
+        // The shell bursts first. Candy follows it, rather than looking like small hit sparks.
+        for (let i = 0; i < (gentle ? 12 : 38); i++) {
+          const angle = i / (gentle ? 12 : 38) * TAU + Math.random() * .16;
+          const force = gentle ? 45 + Math.random() * 75 : 190 + Math.random() * 310;
+          this.particles.push({ x: event.x, y: event.y, vx: Math.cos(angle) * force,
+            vy: Math.sin(angle) * force - (gentle ? 25 : 85), life: 1.45, maxLife: 1.45,
+            size: 8 + Math.random() * 13, color: i % 2 ? '#ed793c' : '#ffba62',
+            rotation: angle, spin: gentle ? .4 : (Math.random() - .5) * 9,
+            gravity: gentle ? 55 : 235, kind: 'shell' });
+        }
+        for (let i = 0; i < (gentle ? 18 : 48); i++) {
+          const angle = Math.random() * TAU, force = gentle ? 55 + Math.random() * 70 : 130 + Math.random() * 260;
+          this.particles.push({ x: event.x, y: event.y, vx: Math.cos(angle) * force,
+            vy: Math.sin(angle) * force - (gentle ? 55 : 140), life: 3.8, maxLife: 3.8,
+            size: 5 + Math.random() * 6, color: colors[i % colors.length],
+            rotation: Math.random() * TAU, spin: gentle ? .35 : (Math.random() - .5) * 5,
+            gravity: gentle ? 55 : 145, delay: gentle ? .15 : .18 + Math.random() * .2,
+            candy: true, striped: i % 2 === 0 });
+        }
+        // A finite second wave falls across the whole court after the central blast.
+        for (let i = 0; i < (gentle ? 16 : 62); i++) {
+          this.particles.push({ x: 25 + Math.random() * 910, y: -20 - Math.random() * 120,
+            vx: (Math.random() - .5) * (gentle ? 18 : 65), vy: gentle ? 38 : 65 + Math.random() * 55,
+            life: 5.6, maxLife: 5.6, size: 5 + Math.random() * 5,
+            color: colors[i % colors.length], rotation: Math.random() * TAU,
+            spin: gentle ? .2 : (Math.random() - .5) * 3, gravity: gentle ? 8 : 18,
+            delay: .5 + Math.random() * 1.4, candy: true, striped: i % 3 === 0 });
+        }
+        for (let i = 0; i < (gentle ? 8 : 24); i++) {
+          const angle = Math.random() * TAU, force = gentle ? 60 : 210 + Math.random() * 260;
+          this.particles.push({ x: event.x, y: event.y, vx: Math.cos(angle) * force,
+            vy: Math.sin(angle) * force, life: 1.2, maxLife: 1.2,
+            size: 2 + Math.random() * 3, color: '#fff0b7', rotation: angle,
+            gravity: 30, kind: 'star' });
         }
       }
+      this.particles = this.particles.slice(-240);
+    }
+
+    explosion(c, dt) {
+      if (!this.burst) return;
+      this.burst.age += dt;
+      const { x, y, age } = this.burst;
+      if (age > 1.3) { this.burst = null; return; }
+      const fade = Math.max(0, 1 - age / 1.3);
+      c.save();
+      if (this.reducedMotion) {
+        c.globalAlpha = fade * .6;
+        this.glow(c, x, y, 145, '#ffb46d80');
+      } else {
+        // One warm flash, a large soft core and expanding rings emphasize the final blast.
+        if (age < .22) {
+          c.fillStyle = `rgba(255,221,164,${(1 - age / .22) * .25})`;
+          c.fillRect(0, 0, 960, 540);
+        }
+        c.globalAlpha = fade;
+        this.glow(c, x, y, 110 + age * 240, '#ffad5d70');
+        for (let ring = 0; ring < 3; ring++) {
+          const progress = age - ring * .09;
+          if (progress < 0) continue;
+          c.globalAlpha = Math.max(0, 1 - progress / .95) * (ring ? .65 : .9);
+          c.strokeStyle = ring % 2 ? '#ff9f59' : '#fff0bc';
+          c.lineWidth = Math.max(1, 11 - progress * 10 - ring * 2);
+          c.beginPath(); c.arc(x, y, 45 + progress * (ring ? 290 : 390), 0, TAU); c.stroke();
+        }
+        c.globalAlpha = Math.max(0, 1 - age / .45) * .8;
+        c.fillStyle = '#ffe6a4';
+        c.beginPath();
+        for (let i = 0; i < 24; i++) {
+          const angle = i / 24 * TAU, radius = (i % 2 ? 22 : 85 + age * 185);
+          const px = x + Math.cos(angle) * radius, py = y + Math.sin(angle) * radius;
+          if (i) c.lineTo(px, py); else c.moveTo(px, py);
+        }
+        c.closePath(); c.fill();
+      }
+      c.restore();
+    }
+
+    particle(c, p) {
+      c.save();
+      c.globalAlpha = Math.max(0, Math.min(1, p.life / Math.min(.7, p.maxLife)));
+      c.translate(p.x, p.y); c.rotate(p.rotation); c.fillStyle = p.color;
+      const s = p.size;
+      if (p.candy) {
+        c.beginPath(); c.moveTo(-s, 0); c.lineTo(-s * 1.7, -s * .7); c.lineTo(-s * 1.7, s * .7); c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(s, 0); c.lineTo(s * 1.7, -s * .7); c.lineTo(s * 1.7, s * .7); c.closePath(); c.fill();
+        c.fillRect(-s, -s * .62, s * 2, s * 1.24);
+        c.fillStyle = '#fff7dc'; c.globalAlpha *= .55;
+        if (p.striped) { c.fillRect(-s * .55, -s * .62, s * .28, s * 1.24); c.fillRect(s * .28, -s * .62, s * .28, s * 1.24); }
+        else c.fillRect(-s * .65, -s * .4, s * .9, s * .18);
+      } else if (p.kind === 'shell') {
+        c.beginPath(); c.moveTo(-s, -s * .55); c.lineTo(s * .75, -s * .7); c.lineTo(s * .4, s); c.lineTo(-s * .45, s * .55); c.closePath(); c.fill();
+        c.strokeStyle = '#9e482d'; c.lineWidth = 1.5;
+        c.beginPath(); c.moveTo(-s * .3, -s * .5); c.lineTo(s * .1, s * .65); c.stroke();
+      } else if (p.kind === 'star') {
+        c.fillRect(-s * 1.7, -s * .35, s * 3.4, s * .7);
+        c.fillRect(-s * .35, -s * 1.7, s * .7, s * 3.4);
+      } else c.fillRect(-s / 2, -s / 2, s, s);
+      c.restore();
     }
 
     render(game, dt) {
-      if (!game.paused) this.time += dt;
+      const frozen = game.paused || game.state === 'roundEnd';
+      if (!frozen) this.time += dt;
       const c = this.ctx;
       c.save();
-      if (this.shake > 0 && !game.paused) { this.shake = Math.max(0, this.shake - dt); c.translate(Math.sin(this.time * 91) * this.shake * 7, Math.cos(this.time * 73) * this.shake * 5); }
+      if (this.shake > 0 && !frozen) { this.shake = Math.max(0, this.shake - dt); c.translate(Math.sin(this.time * 91) * this.shake * 7, Math.cos(this.time * 73) * this.shake * 5); }
       c.drawImage(this.background, 0, 0);
       // A few drifting fireflies instead of rain over the play area.
       for (let i = 0; i < 9; i++) { const x = ((i * 121 + this.time * (i % 2 ? 3 : -2)) % 960 + 960) % 960, y = 170 + (i * 37) % 215 + Math.sin(this.time + i) * 9; c.globalAlpha = .2 + Math.sin(this.time * .7 + i) * .12; c.fillStyle = i % 2 ? palette.mint : palette.orange; c.fillRect(x, y, 2, 2); } c.globalAlpha = 1;
@@ -2145,7 +2400,8 @@ footer i{
       } else this.trail = [];
       if (!['explosion', 'celebration'].includes(game.state)) {
         const b = game.ball, bomb = game.state === 'countdown';
-        const radius = bomb ? 48 + Math.sin(this.time * 16) * (this.reducedMotion ? 0 : 2) : b.r;
+        const swell = bomb ? Math.max(0, Math.min(1, (game.stateTime - 2.35) / .85)) : 0;
+        const radius = bomb ? 48 + swell * (this.reducedMotion ? 10 : 34) + Math.sin(this.time * 16) * (this.reducedMotion ? 0 : 2 + swell * 2) : b.r;
         const y = game.state === 'ready' ? b.y + Math.sin(this.time * 1.4) * 7 : b.y;
         this.pumpkin(c, b.x, y, radius, bomb ? Math.sin(this.time * 25) * .04 : b.spin * .12, bomb);
         if (bomb) {
@@ -2153,15 +2409,13 @@ footer i{
           this.glow(c, b.x + 42, y - radius - 12, 20, '#ffbd7b88'); c.fillStyle = '#ffe7ae'; c.beginPath(); c.arc(b.x + 42, y - radius - 12, 4, 0, TAU); c.fill();
         }
       }
-      if (game.state === 'explosion') {
-        const t = game.stateTime; c.strokeStyle = `rgba(255,182,112,${Math.max(0, .65 - t)})`; c.lineWidth = 3; c.beginPath(); c.arc(480, 230, 35 + t * 210, 0, TAU); c.stroke();
-      }
-      const fxDt = game.paused ? 0 : dt;
+      const fxDt = frozen ? 0 : dt;
+      this.explosion(c, fxDt);
       for (const p of this.particles) {
-        p.life -= fxDt; p.x += p.vx * fxDt; p.y += p.vy * fxDt; p.vy += 160 * fxDt; p.rotation += fxDt * 3;
-        c.save(); c.globalAlpha = Math.max(0, Math.min(1, p.life)); c.translate(p.x, p.y); c.rotate(p.rotation); c.fillStyle = p.color;
-        if (p.candy) { c.fillRect(-p.size, -p.size * .6, p.size * 2, p.size * 1.2); c.beginPath(); c.moveTo(-p.size, 0); c.lineTo(-p.size * 1.8, -p.size * .8); c.lineTo(-p.size * 1.8, p.size * .8); c.closePath(); c.fill(); c.beginPath(); c.moveTo(p.size, 0); c.lineTo(p.size * 1.8, -p.size * .8); c.lineTo(p.size * 1.8, p.size * .8); c.closePath(); c.fill(); }
-        else c.fillRect(-p.size / 2, -p.size / 2, p.size, p.size); c.restore();
+        if (p.delay > 0) { p.delay = Math.max(0, p.delay - fxDt); continue; }
+        p.life -= fxDt; p.x += p.vx * fxDt; p.y += p.vy * fxDt;
+        p.vy += (p.gravity ?? 160) * fxDt; p.rotation += fxDt * (p.spin ?? 3);
+        this.particle(c, p);
       }
       this.particles = this.particles.filter(p => p.life > 0);
       c.restore();
@@ -2186,7 +2440,40 @@ footer i{
   mobileMedia.addEventListener('change', updateMobileMode);
   updateMobileMode();
   const keyMap = { KeyA: 'left', KeyD: 'right', KeyW: 'jump', KeyS: 'down', Space: 'attack' };
-  const overlays = ['start-overlay', 'pause-overlay', 'end-overlay'];
+  const overlays = ['start-overlay', 'pause-overlay', 'round-overlay', 'end-overlay'];
+  let immersive = false, changingFullscreen = false, pageScroll = 0;
+  function updateFullscreenLabel() {
+    const key = immersive ? 'exitFullscreen' : 'fullscreen';
+    $('fullscreen-btn').setAttribute('aria-label', t(key));
+    $('fullscreen-btn').title = t(key);
+    $('fullscreen-btn').setAttribute('aria-pressed', String(immersive));
+    $('fullscreen-btn').innerHTML = immersive
+      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h5V3m8 0v5h5M8 21v-5H3m18 0h-5v5"/></svg>'
+      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg>';
+  }
+  function setImmersive(value) {
+    if (value && !immersive) pageScroll = window.scrollY;
+    immersive = value;
+    document.body.classList.toggle('fullscreen-play', value);
+    updateFullscreenLabel();
+    if (!value) window.scrollTo(0, pageScroll);
+  }
+  async function enterFullscreen() {
+    setImmersive(true); changingFullscreen = true;
+    try {
+      // Use the same play area for native fullscreen and the viewport fallback.
+      if (document.fullscreenEnabled && !document.fullscreenElement && $('play-area').requestFullscreen) await $('play-area').requestFullscreen();
+    } catch { /* Some phone browsers expose only the in-page fullscreen layout. */ }
+    finally { changingFullscreen = false; $('game').focus({ preventScroll: true }); }
+  }
+  async function exitFullscreen() {
+    changingFullscreen = true;
+    try { if (document.fullscreenElement) await document.exitFullscreen(); } catch { /* Keep the exit button usable. */ }
+    finally { setImmersive(false); changingFullscreen = false; }
+  }
+  // An OS fullscreen exit keeps the phone-friendly viewport layout until its exit button is tapped.
+  document.addEventListener('fullscreenchange', updateFullscreenLabel);
+  $('fullscreen-btn').addEventListener('click', () => immersive ? exitFullscreen() : enterFullscreen());
   function updateHolidayCountdown() {
     const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
     const date = Object.fromEntries(parts.filter(p => p.type !== 'literal').map(p => [p.type, Number(p.value)]));
@@ -2235,9 +2522,11 @@ footer i{
   function updateActionLabels() {
     $('pause-btn').setAttribute('aria-label', t(game.paused ? 'resume' : 'pause'));
     $('sound-btn').setAttribute('aria-label', t(muted ? 'soundOn' : 'soundOff'));
+    updateFullscreenLabel();
   }
 
   function start(restart = false) {
+    if (mobileMode && !immersive) enterFullscreen();
     unlockAudio(); clearInput();
     if (restart) { game.restart(); renderer.reset(); lastState = ''; lastScore = ''; }
     game.start(); showOnly(null); $('pause-btn').disabled = false;
@@ -2249,7 +2538,7 @@ footer i{
   }
 
   function pause(value) {
-    if (['ready', 'celebration'].includes(game.state)) return;
+    if (['ready', 'roundEnd', 'celebration'].includes(game.state)) return;
     game.pause(value); clearInput(); showOnly(value ? 'pause-overlay' : null);
     $('pause-btn').setAttribute('aria-label', t(value ? 'resume' : 'pause'));
     $('pause-btn').innerHTML = value ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 10 7-10 7V5Z"/></svg>' : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>';
@@ -2262,6 +2551,14 @@ footer i{
   $('replay-btn').addEventListener('click', () => start(true));
   $('restart-btn').addEventListener('click', () => { game.pause(false); start(true); });
   $('resume-btn').addEventListener('click', () => pause(false));
+  $('next-round-btn').addEventListener('click', () => {
+    unlockAudio(); clearInput();
+    if (game.continueNextRound()) {
+      showOnly(null); $('pause-btn').disabled = false;
+      $('toast').classList.add('hidden'); toastUntil = 0;
+      $('game').focus({ preventScroll: true }); lastFrame = performance.now();
+    }
+  });
   $('pause-btn').addEventListener('click', () => pause(!game.paused));
   $('sound-btn').addEventListener('click', () => {
     unlockAudio(); muted = !muted;
@@ -2277,15 +2574,16 @@ footer i{
   });
 
   document.addEventListener('keydown', e => {
+    if (e.code === 'Escape' && immersive) { e.preventDefault(); if (!e.repeat) exitFullscreen(); return; }
     if (e.code === 'Escape' || e.code === 'KeyP') { e.preventDefault(); if (!e.repeat) pause(!game.paused); return; }
     const key = keyMap[e.code];
-    if (!key || game.state === 'ready' || game.state === 'celebration' || game.paused) return;
+    if (!key || ['ready', 'roundEnd', 'celebration'].includes(game.state) || game.paused) return;
     if (e.target.closest?.('button,a,input,textarea,select')) return;
     e.preventDefault(); input[key] = true;
   });
   document.addEventListener('keyup', e => { if (keyMap[e.code]) input[keyMap[e.code]] = false; });
   // A lost keyboard focus must never leave the character running or skip the finale.
-  window.addEventListener('blur', () => { clearInput(); if (game.state !== 'ready' && game.state !== 'celebration') pause(true); });
+  window.addEventListener('blur', () => { clearInput(); if (!changingFullscreen && game.state !== 'ready' && game.state !== 'celebration') pause(true); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); pause(true); } });
   document.querySelectorAll('[data-key]').forEach(button => {
     button.addEventListener('pointerdown', e => { e.preventDefault(); button.setPointerCapture(e.pointerId); input[button.dataset.key] = true; button.classList.add('held'); unlockAudio(); });
@@ -2301,6 +2599,11 @@ footer i{
         if (event.roundWin) toast(event.streak === 3 ? 'toastFinal' : 'toastWin', event.streak === 3 ? 'toastFinalHint' : 'toastWinHint', { count: event.streak, remaining: 3 - event.streak }, 2);
         else if (event.roundLoss) toast('toastLoss', 'toastLossHint', {}, 2);
         else toast(event.actor === 'player' ? 'toastPlayerPoint' : 'toastGhostPoint', 'pointScore', { player: event.playerPoints, ghost: event.ghostPoints });
+        if (game.state === 'roundEnd') {
+          clearInput(); $('toast').classList.add('hidden'); toastUntil = 0;
+          showOnly('round-overlay'); $('pause-btn').disabled = true;
+          $('next-round-btn').focus({ preventScroll: true });
+        }
       }
       if (event.type === 'serve') { $('toast').classList.add('hidden'); toastUntil = 0; }
       if (event.type === 'countdown') { $('fuse-caption').classList.remove('hidden'); $('fuse-number').textContent = Math.max(1, event.remaining); announce('announceCountdown', { remaining: event.remaining }); }
@@ -2310,7 +2613,7 @@ footer i{
   }
 
   function updateUI() {
-    document.body.classList.toggle('is-playing', !['ready', 'celebration'].includes(game.state) && !game.paused);
+    document.body.classList.toggle('is-playing', !['ready', 'roundEnd', 'celebration'].includes(game.state) && !game.paused);
     // Read-only DOM diagnostics help verify real keyboard input in a browser.
     $('game').dataset.state = game.state;
     $('game').dataset.playerX = game.player.x.toFixed(1);
@@ -2318,6 +2621,14 @@ footer i{
     $('game').dataset.hits = game.totalHits;
     $('game').dataset.difficulty = game.difficulty;
     $('game').dataset.touchAssist = String(mobileMode);
+    $('game').dataset.playerAttack = String(game.player.attack > 0);
+    const choosingServe = game.state === 'serve' && game.servingActor === 'player';
+    $('serve-hint').classList.toggle('hidden', !choosingServe || game.paused);
+    if (choosingServe) $('serve-hint').textContent = t(input.left || input.right ? 'choosingServe' : 'chooseServe', { seconds: Math.max(1, Math.ceil(game.remainingServe)) });
+    if (game.state === 'roundEnd') {
+      $('round-result').textContent = t(game.lastRoundWinner === 'player' ? 'roundWon' : 'roundLost');
+      $('round-summary').textContent = t('roundSummary', { ghost: game.ghostPoints, player: game.playerPoints, count: game.streak });
+    }
     $('ai-level').textContent = `AI ${game.difficulty}/3`;
     const score = `${game.playerPoints}/${game.ghostPoints}/${game.streak}/${game.round}/${i18n.language}`;
     if (score !== lastScore) {
@@ -2345,6 +2656,16 @@ footer i{
   }
   updateActionLabels(); updateUI();
   requestAnimationFrame(frame);
+  // Keep the rolling pumpkin visible while the actual character images decode.
+  const readyImages = [...Object.values(renderer.images), renderer.ghostImage];
+  const assetsReady = Promise.all(readyImages.map(img => {
+    if (img.complete) return Promise.resolve();
+    return new Promise(resolve => { img.addEventListener('load', resolve, { once: true }); img.addEventListener('error', resolve, { once: true }); });
+  }));
+  Promise.all([assetsReady, new Promise(resolve => setTimeout(resolve, 900))]).then(() => {
+    $('loading-screen').classList.add('leaving');
+    setTimeout(() => $('loading-screen').classList.add('hidden'), 260);
+  });
 })();
 
 </script>

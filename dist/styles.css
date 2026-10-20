@@ -1408,8 +1408,79 @@ footer i{
   body .game-shell{margin-top:14px}
   body .touch-controls,body .touch-controls>div{width:100%;gap:12px}
   body .touch-controls button{flex:1;min-width:0;height:60px;font-size:16px;font-weight:600}
-  body .touch-controls [data-key=left]::before{content:'◀ ';margin-right:8px}
-  body .touch-controls [data-key=right]::after{content:' ▶';margin-left:8px}
+  body .touch-controls [data-key=left]::before,body .touch-controls [data-key=right]::after{content:none}
   body.is-playing .touch-controls{width:auto}
   body .touch-hint{display:block;margin:15px 0 12px;text-align:center;font-size:11px;color:var(--muted)}
+}
+
+/* The play area includes both court and thumb controls in native fullscreen. */
+body.fullscreen-play{overflow:hidden;overscroll-behavior:none;padding:0}
+body.fullscreen-play .masthead,body.fullscreen-play .intro,body.fullscreen-play footer,
+body.fullscreen-play .controls,body.fullscreen-play .touch-hint{display:none}
+body.fullscreen-play #play-area{
+  position:fixed;inset:0;z-index:20;width:100%;height:100vh;height:100dvh;
+  display:block;background:#171321;overflow:hidden;
+}
+body.fullscreen-play #play-frame{
+  position:absolute;inset:0;width:100%;height:100%;display:flex;flex-direction:column;gap:0;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+body.fullscreen-play .game-shell{margin:0;flex:1;min-height:0;border:0;border-radius:0;display:flex;flex-direction:column;box-shadow:none}
+body.fullscreen-play .game-toolbar{flex:0 0 65px;height:65px;padding:8px 14px}
+body.fullscreen-play .court{flex:1;min-height:0;aspect-ratio:auto;background:radial-gradient(ellipse at center,#30223b,#171321);overflow:hidden}
+body.fullscreen-play .court canvas{width:100%;height:100%;object-fit:contain}
+body.fullscreen-play .game-bottom{flex:0 0 30px;height:30px;padding:0 14px}
+body.fullscreen-play .stage-caption{display:none}
+body.fullscreen-play .overlay{overflow:auto;padding:12px}
+body.fullscreen-play .touch-controls{position:static;inset:auto;flex:0 0 auto;margin:0;width:100%;padding:8px 14px;border:0;border-top:1px solid #514038;border-radius:0;background:#1c1924;box-shadow:none}
+body.fullscreen-play .touch-controls>div{display:flex;width:100%;gap:14px}
+body.fullscreen-play .touch-controls button{height:62px;font-size:21px;flex:1;touch-action:none}
+body.fullscreen-play .game-actions>span{display:none}
+#fullscreen-btn[aria-pressed=true]{color:var(--orange)}
+#round-overlay{background:#171321c9;backdrop-filter:blur(3px)}
+#round-overlay .compact-panel{text-align:center}
+#round-overlay h2{color:var(--orange)}
+.serve-hint{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:2;margin:0;padding:7px 14px;border:1px solid #ffb46a66;border-radius:20px;background:#1b1525cf;color:#ffdbac;font-size:12px;white-space:nowrap;pointer-events:none}
+.victory-title{display:inline-block;padding:10px 22px;border:1px solid #ffc779;border-radius:999px;color:#ffe6ad;background:linear-gradient(100deg,#9a4d262e,#ffc06d28,#9a4d262e);box-shadow:0 0 28px #ff9b5040;font-size:23px;font-weight:800;letter-spacing:3px}
+.victory-title::before,.victory-title::after{content:'✦';margin:0 9px;color:#ffba60}
+.end-panel .victory-tag{display:block;font-size:10px;letter-spacing:3px;color:#f5bf7d;margin:10px 0}
+.end-panel h2{font-size:52px;margin:15px 0}
+.end-panel .end-spark{display:none}
+@media(max-width:760px),(pointer:coarse){
+  body .game-toolbar{height:76px}
+  body.fullscreen-play .game-toolbar{height:76px;flex-basis:76px}
+  body .game-actions{gap:5px}
+  body .icon-btn{width:30px;height:30px}
+  body .scoreboard{gap:6px}
+  body .competitor{font-size:8px}
+  body .scoreboard strong{font-size:21px}
+  body .victory-title{font-size:19px;letter-spacing:1px;padding:10px 13px}
+  body .end-panel h2{font-size:44px}
+}
+@media(orientation:portrait) and (max-width:760px){
+  body.fullscreen-play #play-frame{
+    inset:auto;left:50%;top:50%;width:100vh;width:100dvh;height:100vw;height:100dvw;
+    transform:translate(-50%,-50%) rotate(90deg);
+    padding:env(safe-area-inset-left) env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom);
+  }
+}
+@media(orientation:landscape) and (max-height:600px),(orientation:portrait) and (max-width:760px){
+  body.fullscreen-play .game-toolbar{flex:0 0 42px;height:42px;display:flex;justify-content:space-between;gap:8px;padding:4px 12px}
+  body.fullscreen-play .scoreboard{order:0}
+  body.fullscreen-play .streak-wrap{order:1;margin:0}
+  body.fullscreen-play .game-actions{order:2}
+  body.fullscreen-play .streak-wrap>.tiny-label{display:none}
+  body.fullscreen-play .game-bottom{display:none}
+  body.fullscreen-play .touch-controls{padding:5px 18px}
+  body.fullscreen-play .touch-controls>div{justify-content:space-between}
+  body.fullscreen-play .touch-controls button{flex:0 1 28%;height:46px}
+  body.fullscreen-play .compact-panel h2{font-size:24px;margin:8px 0}
+  body.fullscreen-play .compact-panel p{margin:8px 0 14px}
+  body.fullscreen-play .end-panel{display:grid;grid-template-columns:1fr 1fr;align-items:center;column-gap:26px;max-width:650px}
+  body.fullscreen-play .end-panel .mini-tag,body.fullscreen-play .end-panel>p{display:none}
+  body.fullscreen-play .end-panel h2{grid-column:1;grid-row:1 / span 3;font-size:43px;margin:0}
+  body.fullscreen-play .end-panel .victory-title{grid-column:2;grid-row:1;font-size:18px;letter-spacing:0}
+  body.fullscreen-play .end-panel .victory-tag{display:none}
+  body.fullscreen-play .end-panel .end-stats{grid-column:2;grid-row:2;margin:8px 0}
+  body.fullscreen-play .end-panel #replay-btn{grid-column:2;grid-row:3;padding:9px 17px}
 }
