@@ -9,11 +9,11 @@
     airAttackSpeed: 460, airAttackLift: 350,
     nearNetAttackLift: 570, bodyBumpLift: 440,
     aiDifficulties: Object.freeze([
-      Object.freeze({ name: '入门', speed: 145, error: 420, reactionMin: 0.28, reactionMax: 0.48, attackWindow: 0.08 }),
-      Object.freeze({ name: '进阶', speed: 180, error: 380, reactionMin: 0.22, reactionMax: 0.40, attackWindow: 0.10 }),
-      Object.freeze({ name: '挑战', speed: 210, error: 340, reactionMin: 0.18, reactionMax: 0.32, attackWindow: 0.12 })
+      Object.freeze({ name: '入门', speed: 210, error: 350, reactionMin: 0.16, reactionMax: 0.30, attackWindow: 0.10 }),
+      Object.freeze({ name: '进阶', speed: 238, error: 300, reactionMin: 0.13, reactionMax: 0.26, attackWindow: 0.12 }),
+      Object.freeze({ name: '挑战', speed: 258, error: 265, reactionMin: 0.10, reactionMax: 0.22, attackWindow: 0.13 })
     ]),
-    attackRange: 150, attackCooldown: 0.34, aiAttackRange: 95, aiAttackCooldown: 0.5, pointsToWin: 3,
+    attackRange: 116, attackCooldown: 0.34, pointsToWin: 3,
     streakToWin: 3, serveDelay: 0.78, pointDelay: 1.25,
     roundDelay: 2.1, countdownDuration: 3.2, explosionDuration: 1.2
   });
@@ -250,14 +250,12 @@
 
     _attack(body, who) {
       if (body.cooldown > 0) return;
-      const isPlayer = who === 'player';
-      const attackRange = isPlayer ? CONFIG.attackRange : CONFIG.aiAttackRange;
-      body.cooldown = isPlayer ? CONFIG.attackCooldown : CONFIG.aiAttackCooldown;
+      body.cooldown = CONFIG.attackCooldown;
       body.attack = 0.2;
       const b = this.ball;
       const distance = Math.hypot(b.x - body.x, b.y - (body.y - 49));
       const ownSide = who === 'player' ? b.x > CONFIG.netX - 12 : b.x < CONFIG.netX + 12;
-      if (distance > attackRange || body.touchCooldown > 0 || !ownSide) return;
+      if (distance > CONFIG.attackRange || body.touchCooldown > 0 || !ownSide) return;
       const direction = who === 'player' ? -1 : 1;
       const netDistance = Math.abs(b.x - CONFIG.netX);
       // A nearby swing lofts over the net; an airborne swing sends a faster shot.
