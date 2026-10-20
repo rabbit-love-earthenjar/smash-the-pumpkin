@@ -3,6 +3,7 @@
   // Offline text only: no network, dependencies or gameplay state in the language pack.
   const translations = {
     zh: {
+      mobileHint: '左右移动，自动起跳与挥击。', status_mobilePlaying: '左右移动，接住南瓜！',
       difficultyHint: '连胜后难度逐局提高',
       countdownLabel: '距离万圣节', countdownUnit: '天',
       title: '打爆南瓜', documentTitle: '打爆南瓜 · 京都万圣夜',
@@ -37,6 +38,7 @@
       status_celebration: 'happy hallow day · 今晚的快乐归你啦。', status_paused: '已暂停 · 按 Esc 或「继续对打」返回球场。'
     },
     ja: {
+      mobileHint: '左右に移動。ジャンプとアタックは自動です。', status_mobilePlaying: '左右に動いて、カボチャを打ち返そう！',
       difficultyHint: '連勝すると難易度が上がります',
       countdownLabel: 'ハロウィンまで', countdownUnit: '日',
       title: 'かぼちゃスマッシュ', documentTitle: 'かぼちゃスマッシュ · 京都ハロウィン',
@@ -71,6 +73,7 @@
       status_celebration: 'happy hallow day · 楽しい夜を！', status_paused: '一時停止中 · Escか「対戦を再開」でコートへ。'
     },
     en: {
+      mobileHint: 'Move left or right. Jumping and hitting are automatic.', status_mobilePlaying: 'Move left or right and return the pumpkin!',
       difficultyHint: 'Difficulty rises after each game won',
       countdownLabel: 'HALLOWEEN IN', countdownUnit: 'DAYS',
       title: 'Smash the Pumpkin', documentTitle: 'Smash the Pumpkin · Kyoto Halloween',

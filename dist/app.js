@@ -6,6 +6,11 @@
   const game = new PumpkinVolleyEngine.Game();
   const renderer = new PumpkinVolleyRenderer($('game'));
   const input = { left: false, right: false, jump: false, down: false, attack: false };
+  const mobileMedia = matchMedia('(max-width: 760px), (pointer: coarse)');
+  let mobileMode = mobileMedia.matches;
+  const updateMobileMode = () => { mobileMode = mobileMedia.matches; document.body.classList.toggle('mobile-mode', mobileMode); };
+  mobileMedia.addEventListener('change', updateMobileMode);
+  updateMobileMode();
   const keyMap = { KeyA: 'left', KeyD: 'right', KeyW: 'jump', KeyS: 'down', Space: 'attack' };
   const overlays = ['start-overlay', 'pause-overlay', 'end-overlay'];
   function updateHolidayCountdown() {
@@ -138,6 +143,7 @@
     $('game').dataset.playerY = game.player.y.toFixed(1);
     $('game').dataset.hits = game.totalHits;
     $('game').dataset.difficulty = game.difficulty;
+    $('game').dataset.touchAssist = String(mobileMode);
     $('ai-level').textContent = `AI ${game.difficulty}/3`;
     const score = `${game.playerPoints}/${game.ghostPoints}/${game.streak}/${game.round}/${i18n.language}`;
     if (score !== lastScore) {
@@ -149,7 +155,7 @@
       lastScore = score;
     }
     $('best-rally').textContent = String(game.bestRally).padStart(2, '0');
-    const status = t(`status_${game.paused ? 'paused' : game.state}`);
+    const status = t(mobileMode && game.state === 'playing' && !game.paused ? 'status_mobilePlaying' : `status_${game.paused ? 'paused' : game.state}`);
     if (status !== lastStatus) { $('game-status').textContent = status; lastStatus = status; }
     if (game.state !== lastState) { if (game.state === 'countdown') $('toast').classList.add('hidden'); lastState = game.state; }
     if (toastUntil && game.time > toastUntil) { $('toast').classList.add('hidden'); toastUntil = 0; }
@@ -157,7 +163,11 @@
 
   function frame(now) {
     const dt = Math.max(0, Math.min(.05, (now - lastFrame) / 1000)); lastFrame = now;
-    game.step(dt, input); handleEvents(); updateUI(); renderer.render(game, dt); requestAnimationFrame(frame);
+    // Phones only ask for left/right movement; nearby hits and high-ball jumps are automatic.
+    const autoJump = mobileMode && game.ball.x > PumpkinVolleyEngine.CONFIG.netX &&
+      Math.abs(game.ball.x - game.player.x) < 105 && game.ball.vy > 60 && game.ball.y < game.player.y - 105;
+    const gameplayInput = mobileMode ? { ...input, attack: true, jump: input.jump || autoJump } : input;
+    game.step(dt, gameplayInput); handleEvents(); updateUI(); renderer.render(game, dt); requestAnimationFrame(frame);
   }
   updateActionLabels(); updateUI();
   requestAnimationFrame(frame);

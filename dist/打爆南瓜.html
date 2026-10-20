@@ -909,6 +909,60 @@ footer i{
   font-weight:600
 }
 
+.touch-hint{
+  display:none;
+}
+
+/* Phone play keeps the court and only two thumb targets in view. */
+@media(max-width:760px),(pointer:coarse){
+  .masthead{
+    height:66px;
+  }
+  .intro,.controls{
+    display:none;
+  }
+  .game-shell{
+    margin-top:14px;
+  }
+  .touch-hint{
+    display:block;
+    margin:15px 0 10px;
+    color:var(--muted);
+    font-size:11px;
+    text-align:center;
+  }
+  .touch-controls{
+    display:flex;
+    gap:12px;
+    width:100%;
+  }
+  .touch-controls>div{
+    display:flex;
+    gap:12px;
+    width:100%;
+  }
+  .touch-controls button{
+    flex:1;
+    min-width:0;
+    height:60px;
+    font-size:16px;
+    font-weight:600;
+    border-color:#806047;
+    background:#302734;
+  }
+  body.is-playing .touch-controls{
+    width:auto;
+    padding:8px;
+  }
+  body.is-playing{
+    padding-bottom:90px;
+  }
+  footer{
+    margin-top:8px;
+    padding-top:16px;
+  }
+}
+
 .touch-controls button.held{
   background:var(--mint);
   color:#191421
@@ -1368,6 +1422,18 @@ footer i{
 }
 
 
+@media(max-width:760px),(pointer:coarse){
+  body .intro,body .controls{display:none}
+  body .masthead{height:66px}
+  body .game-shell{margin-top:14px}
+  body .touch-controls,body .touch-controls>div{width:100%;gap:12px}
+  body .touch-controls button{flex:1;min-width:0;height:60px;font-size:16px;font-weight:600}
+  body .touch-controls [data-key=left]::before{content:'◀ ';margin-right:8px}
+  body .touch-controls [data-key=right]::after{content:' ▶';margin-left:8px}
+  body.is-playing .touch-controls{width:auto}
+  body .touch-hint{display:block;margin:15px 0 12px;text-align:center;font-size:11px;color:var(--muted)}
+}
+
 </style>
 </head>
 <body>
@@ -1408,7 +1474,8 @@ footer i{
       <div class="key-guide"><kbd class="space-key">SPACE</kbd><div><b data-i18n="attackLabel">挥击南瓜</b><span data-i18n="attackHint">靠近时按空格，跳起来也能回击</span></div></div>
       <div class="rule-note"><span>01—03</span><p data-i18n="ruleNote">连赢三局，收下万圣节惊喜</p></div>
     </section>
-    <div class="touch-controls" data-i18n-aria="touchLabel" aria-label="触屏操作"><div><button type="button" data-key="left" data-i18n-aria="left" aria-label="向左移动">A ←</button><button type="button" data-key="right" data-i18n-aria="right" aria-label="向右移动">D →</button><button type="button" data-key="jump" data-i18n-aria="jump" aria-label="跳跃">W ↑</button><button type="button" data-key="down" data-i18n-aria="down" aria-label="快速下落">S ↓</button></div><button type="button" data-key="attack" class="touch-attack" data-i18n="touchAttack">空格 · 挥击</button></div>
+    <p class="touch-hint" data-i18n="mobileHint">左右移动，自动起跳与挥击。</p>
+    <div class="touch-controls" data-i18n-aria="touchLabel" aria-label="触屏操作"><div><button type="button" data-key="left" data-i18n="left" data-i18n-aria="left" aria-label="向左移动">向左移动</button><button type="button" data-key="right" data-i18n="right" data-i18n-aria="right" aria-label="向右移动">向右移动</button></div></div>
     <p id="announcer" class="sr-only" aria-live="polite"></p>
   </main>
   <footer><span data-i18n="footer">京都夜神社 × 万圣夜小游戏</span><span><span data-i18n="footerWish">祝你度过一个「鬼」开心的夜晚</span> <span class="footer-star">✦</span></span></footer>
@@ -1418,6 +1485,7 @@ footer i{
   // Offline text only: no network, dependencies or gameplay state in the language pack.
   const translations = {
     zh: {
+      mobileHint: '左右移动，自动起跳与挥击。', status_mobilePlaying: '左右移动，接住南瓜！',
       difficultyHint: '连胜后难度逐局提高',
       countdownLabel: '距离万圣节', countdownUnit: '天',
       title: '打爆南瓜', documentTitle: '打爆南瓜 · 京都万圣夜',
@@ -1452,6 +1520,7 @@ footer i{
       status_celebration: 'happy hallow day · 今晚的快乐归你啦。', status_paused: '已暂停 · 按 Esc 或「继续对打」返回球场。'
     },
     ja: {
+      mobileHint: '左右に移動。ジャンプとアタックは自動です。', status_mobilePlaying: '左右に動いて、カボチャを打ち返そう！',
       difficultyHint: '連勝すると難易度が上がります',
       countdownLabel: 'ハロウィンまで', countdownUnit: '日',
       title: 'かぼちゃスマッシュ', documentTitle: 'かぼちゃスマッシュ · 京都ハロウィン',
@@ -1486,6 +1555,7 @@ footer i{
       status_celebration: 'happy hallow day · 楽しい夜を！', status_paused: '一時停止中 · Escか「対戦を再開」でコートへ。'
     },
     en: {
+      mobileHint: 'Move left or right. Jumping and hitting are automatic.', status_mobilePlaying: 'Move left or right and return the pumpkin!',
       difficultyHint: 'Difficulty rises after each game won',
       countdownLabel: 'HALLOWEEN IN', countdownUnit: 'DAYS',
       title: 'Smash the Pumpkin', documentTitle: 'Smash the Pumpkin · Kyoto Halloween',
@@ -2110,6 +2180,11 @@ footer i{
   const game = new PumpkinVolleyEngine.Game();
   const renderer = new PumpkinVolleyRenderer($('game'));
   const input = { left: false, right: false, jump: false, down: false, attack: false };
+  const mobileMedia = matchMedia('(max-width: 760px), (pointer: coarse)');
+  let mobileMode = mobileMedia.matches;
+  const updateMobileMode = () => { mobileMode = mobileMedia.matches; document.body.classList.toggle('mobile-mode', mobileMode); };
+  mobileMedia.addEventListener('change', updateMobileMode);
+  updateMobileMode();
   const keyMap = { KeyA: 'left', KeyD: 'right', KeyW: 'jump', KeyS: 'down', Space: 'attack' };
   const overlays = ['start-overlay', 'pause-overlay', 'end-overlay'];
   function updateHolidayCountdown() {
@@ -2242,6 +2317,7 @@ footer i{
     $('game').dataset.playerY = game.player.y.toFixed(1);
     $('game').dataset.hits = game.totalHits;
     $('game').dataset.difficulty = game.difficulty;
+    $('game').dataset.touchAssist = String(mobileMode);
     $('ai-level').textContent = `AI ${game.difficulty}/3`;
     const score = `${game.playerPoints}/${game.ghostPoints}/${game.streak}/${game.round}/${i18n.language}`;
     if (score !== lastScore) {
@@ -2253,7 +2329,7 @@ footer i{
       lastScore = score;
     }
     $('best-rally').textContent = String(game.bestRally).padStart(2, '0');
-    const status = t(`status_${game.paused ? 'paused' : game.state}`);
+    const status = t(mobileMode && game.state === 'playing' && !game.paused ? 'status_mobilePlaying' : `status_${game.paused ? 'paused' : game.state}`);
     if (status !== lastStatus) { $('game-status').textContent = status; lastStatus = status; }
     if (game.state !== lastState) { if (game.state === 'countdown') $('toast').classList.add('hidden'); lastState = game.state; }
     if (toastUntil && game.time > toastUntil) { $('toast').classList.add('hidden'); toastUntil = 0; }
@@ -2261,7 +2337,11 @@ footer i{
 
   function frame(now) {
     const dt = Math.max(0, Math.min(.05, (now - lastFrame) / 1000)); lastFrame = now;
-    game.step(dt, input); handleEvents(); updateUI(); renderer.render(game, dt); requestAnimationFrame(frame);
+    // Phones only ask for left/right movement; nearby hits and high-ball jumps are automatic.
+    const autoJump = mobileMode && game.ball.x > PumpkinVolleyEngine.CONFIG.netX &&
+      Math.abs(game.ball.x - game.player.x) < 105 && game.ball.vy > 60 && game.ball.y < game.player.y - 105;
+    const gameplayInput = mobileMode ? { ...input, attack: true, jump: input.jump || autoJump } : input;
+    game.step(dt, gameplayInput); handleEvents(); updateUI(); renderer.render(game, dt); requestAnimationFrame(frame);
   }
   updateActionLabels(); updateUI();
   requestAnimationFrame(frame);

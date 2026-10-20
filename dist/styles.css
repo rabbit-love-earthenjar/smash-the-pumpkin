@@ -889,6 +889,60 @@ footer i{
   font-weight:600
 }
 
+.touch-hint{
+  display:none;
+}
+
+/* Phone play keeps the court and only two thumb targets in view. */
+@media(max-width:760px),(pointer:coarse){
+  .masthead{
+    height:66px;
+  }
+  .intro,.controls{
+    display:none;
+  }
+  .game-shell{
+    margin-top:14px;
+  }
+  .touch-hint{
+    display:block;
+    margin:15px 0 10px;
+    color:var(--muted);
+    font-size:11px;
+    text-align:center;
+  }
+  .touch-controls{
+    display:flex;
+    gap:12px;
+    width:100%;
+  }
+  .touch-controls>div{
+    display:flex;
+    gap:12px;
+    width:100%;
+  }
+  .touch-controls button{
+    flex:1;
+    min-width:0;
+    height:60px;
+    font-size:16px;
+    font-weight:600;
+    border-color:#806047;
+    background:#302734;
+  }
+  body.is-playing .touch-controls{
+    width:auto;
+    padding:8px;
+  }
+  body.is-playing{
+    padding-bottom:90px;
+  }
+  footer{
+    margin-top:8px;
+    padding-top:16px;
+  }
+}
+
 .touch-controls button.held{
   background:var(--mint);
   color:#191421
@@ -1347,3 +1401,15 @@ footer i{
   }
 }
 
+
+@media(max-width:760px),(pointer:coarse){
+  body .intro,body .controls{display:none}
+  body .masthead{height:66px}
+  body .game-shell{margin-top:14px}
+  body .touch-controls,body .touch-controls>div{width:100%;gap:12px}
+  body .touch-controls button{flex:1;min-width:0;height:60px;font-size:16px;font-weight:600}
+  body .touch-controls [data-key=left]::before{content:'◀ ';margin-right:8px}
+  body .touch-controls [data-key=right]::after{content:' ▶';margin-left:8px}
+  body.is-playing .touch-controls{width:auto}
+  body .touch-hint{display:block;margin:15px 0 12px;text-align:center;font-size:11px;color:var(--muted)}
+}
