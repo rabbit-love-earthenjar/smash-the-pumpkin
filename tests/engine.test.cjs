@@ -6,6 +6,7 @@ function advance(game, seconds, input = {}) {
   for (let i = 0; i < Math.ceil(seconds * 120); i++) game.step(1 / 120, input);
 }
 function playing(game) {
+  if (game.state === 'roundEnd') assert.equal(game.continueNextRound(), true);
   for (let i = 0; i < 800 && game.state !== 'playing'; i++) game.step(1 / 120);
   assert.equal(game.state, 'playing');
 }
@@ -52,6 +53,57 @@ test('each round ends at three points, and three consecutive round wins unlock t
   assert.equal(game.events.filter(e => e.type === 'win').length, 3);
 });
 
+test('player serve follows selected position, waits while held, then launches after release', () => {
+  const game = new Game(); game.start();
+  assert.equal(game.servingActor, 'player');
+  assert.equal(game.remainingServe, CONFIG.playerServeDelay);
+  advance(game, 4, { right: true, attack: true });
+  assert.equal(game.state, 'serve');
+  assert.equal(game.player.x, CONFIG.W - 35);
+  assert.equal(game.ball.x, CONFIG.W - CONFIG.ballRadius - 1);
+  assert.equal(game.ball.vx, 0); assert.equal(game.ball.vy, 0);
+  assert.equal(game.remainingServe, CONFIG.serveIdleDelay);
+  advance(game, .8, { attack: true });
+  assert.equal(game.state, 'serve');
+  const selected = game.ball.x;
+  advance(game, .06, { attack: true });
+  assert.equal(game.state, 'playing');
+  assert.ok(game.ball.x <= selected && game.ball.x > selected - 10);
+  assert.ok(game.ball.vx < -305); assert.equal(game.remainingServe, 0);
+  let crossed = false;
+  for (let i = 0; i < 180 && game.state === 'playing'; i++) {
+    game.step(1 / 120);
+    if (game.ball.x <= CONFIG.netX) {
+      assert.ok(game.ball.y + game.ball.r < CONFIG.netTop);
+      crossed = true; break;
+    }
+  }
+  assert.equal(crossed, true);
+
+  const near = new Game(); near.start();
+  advance(near, 1, { left: true });
+  assert.ok(near.ball.x >= CONFIG.netX + CONFIG.netHalfWidth + near.ball.r + 1);
+  const nearX = near.ball.x;
+  advance(near, 1.55);
+  assert.equal(near.state, 'serve');
+  assert.equal(near.ball.x, nearX);
+  advance(near, .06);
+  assert.equal(near.state, 'playing');
+  assert.equal(near.ball.vx, -305);
+});
+
+test('ghost serves retain the original .78 second automatic launch', () => {
+  const game = new Game(); game.start(); playing(game);
+  game.awardPoint('ghost');
+  while (game.state === 'point') game.step(1 / 120);
+  assert.equal(game.state, 'serve'); assert.equal(game.servingActor, 'ghost');
+  assert.equal(game.remainingServe, CONFIG.serveDelay);
+  advance(game, .75, { left: true, attack: true });
+  assert.equal(game.state, 'serve'); assert.equal(game.ball.x, 225);
+  advance(game, .04, { left: true });
+  assert.equal(game.state, 'playing'); assert.equal(game.ball.vx, 305);
+});
+
 test('losing a round resets the streak; isolated lost points do not', () => {
   const game = new Game(); game.start();
   round(game, 'player');
@@ -73,6 +125,61 @@ test('a 2:2 round ends at 3:2 without requiring a two point lead', () => {
   for (const who of ['player', 'ghost', 'player', 'ghost', 'player']) point(game, who);
   assert.equal(game.playerPoints, 3); assert.equal(game.ghostPoints, 2);
   assert.equal(game.streak, 1);
+});
+
+test('a completed game freezes on its final score until one explicit continue action', () => {
+  for (const who of ['player', 'ghost']) {
+    const game = new Game(); game.start();
+    assert.equal(game.continueNextRound(), false);
+    round(game, who);
+    assert.equal(game.state, 'roundEnd');
+    assert.equal(game.lastRoundWinner, who);
+    assert.equal(game[who === 'player' ? 'playerPoints' : 'ghostPoints'], 3);
+    const before = JSON.stringify({
+      time: game.time, stateTime: game.stateTime, ball: game.ball,
+      player: game.player, ghost: game.ghost, round: game.round,
+      playerPoints: game.playerPoints, ghostPoints: game.ghostPoints
+    });
+    advance(game, 10, { left: true, right: true, jump: true, attack: true });
+    assert.equal(JSON.stringify({
+      time: game.time, stateTime: game.stateTime, ball: game.ball,
+      player: game.player, ghost: game.ghost, round: game.round,
+      playerPoints: game.playerPoints, ghostPoints: game.ghostPoints
+    }), before);
+    assert.equal(game.awardPoint('player'), false);
+    assert.equal(game.continueNextRound(), true);
+    assert.equal(game.state, 'serve');
+    assert.equal(game.round, 2);
+    assert.equal(game.playerPoints, 0); assert.equal(game.ghostPoints, 0);
+    assert.equal(game.continueNextRound(), false);
+    playing(game);
+  }
+});
+
+test('holding auto attack while distant stays idle, and actual returns alone animate the strike', () => {
+  const game = new Game(); game.start(); playing(game);
+  for (let i = 0; i < 240; i++) {
+    Object.assign(game.ball, { x: 800, y: 80, vx: 0, vy: 0 });
+    game.step(1 / 120, { attack: true });
+    assert.equal(game.player.attack, 0);
+  }
+  assert.equal(game.events.filter(event => event.type === 'hit' && event.actor === 'player').length, 0);
+  assert.ok(game.player.cooldown > 0);
+  while (game.player.cooldown > 0) {
+    Object.assign(game.ball, { x: 800, y: 80, vx: 0, vy: 0 });
+    game.step(1 / 120);
+  }
+  Object.assign(game.ball, { x: game.player.x - 45, y: game.player.y - 75, vx: 0, vy: 0 });
+  game.step(1 / 120, { attack: true });
+  assert.equal(game.events.at(-1).kind, 'attack');
+  assert.equal(game.player.attack, 0.2);
+  assert.ok(game.ball.vx < 0);
+
+  const bump = new Game(); bump.start(); playing(bump);
+  Object.assign(bump.ball, { x: bump.player.x + 30, y: bump.player.y - 57, vx: 0, vy: 0 });
+  bump.step(1 / 120);
+  assert.equal(bump.events.at(-1).kind, 'bump');
+  assert.equal(bump.player.attack, 0.2);
 });
 
 test('W requires a new press, S accelerates falling, and Space attacks across the net', () => {
@@ -229,10 +336,12 @@ test('a moving player can beat the AI through real ball physics without injected
   const game = new Game({ random }); game.start();
   const difficultiesPlayed = new Set();
   for (let i = 0; i < 200 * 120 && game.state !== 'celebration'; i++) {
+    if (game.state === 'roundEnd') assert.equal(game.continueNextRound(), true);
     if (game.state === 'playing') difficultiesPlayed.add(game.difficulty);
+    const serving = game.state === 'serve';
     game.step(1 / 120, {
-      left: game.ball.x < game.player.x - 10,
-      right: game.ball.x > game.player.x + 10,
+      left: !serving && game.ball.x < game.player.x - 10,
+      right: !serving && game.ball.x > game.player.x + 10,
       attack: true,
       jump: game.ball.y < 230 && Math.abs(game.ball.x - game.player.x) < 70 && game.ball.vy > 80
     });
